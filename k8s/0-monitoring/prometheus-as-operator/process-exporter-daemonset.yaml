@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/name: process-exporter
+    app.kubernetes.io/version: v1.0.1
+  name: process-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: process-exporter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: process-exporter
+        app.kubernetes.io/version: v1.0.1
+    spec:
+      containers:
+      - args:
+          - -config.path=/etc/process-exporter/config.yaml
+          - --procfs=/host/proc
+          - --threadids=true
+        image: docker.io/jackvanlightly/process-exporter
+        name: process-exporter
+        resources:
+          limits:
+            cpu: 250m
+            memory: 180Mi
+          requests:
+            cpu: 102m
+            memory: 180Mi
+        volumeMounts:
+        - mountPath: /host/proc
+          mountPropagation: HostToContainer
+          name: proc
+          readOnly: true
+        - mountPath: /etc/process-exporter
+          name: config
+          readOnly: false
+      hostNetwork: true
+      hostPID: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      serviceAccountName: process-exporter
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          path: /proc
+        name: proc
+      - configMap:
+          name: process-exporter-config
+        name: config
+      
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 10%

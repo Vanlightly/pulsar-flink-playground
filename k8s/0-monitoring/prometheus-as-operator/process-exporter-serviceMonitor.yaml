@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: process-exporter
+    app.kubernetes.io/version: v1.0.1
+  name: process-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: process-exporter
+  endpoints:
+  - interval: 15s
+    port: http
+  jobLabel: app.kubernetes.io/name
+  

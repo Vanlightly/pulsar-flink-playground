@@ -1,0 +1,108 @@
+volumes:
+  persistence: true
+  local_storage: true
+
+# disabled AntiAffinity
+affinity:
+  anti_affinity: false
+
+## Components
+##
+## Control what components of Apache Pulsar to deploy for the cluster
+components:
+  # zookeeper
+  zookeeper: true
+  # bookkeeper
+  bookkeeper: true
+  # bookkeeper - autorecovery
+  autorecovery: false
+  # broker
+  broker: true
+  # functions
+  functions: false
+  # proxy
+  proxy: true
+  # toolset
+  toolset: false
+  # pulsar manager
+  pulsar_manager: false
+
+## Monitoring Components
+##
+## Control what components of the monitoring stack to deploy for the cluster
+monitoring:
+  # monitoring - prometheus
+  prometheus: false
+  # monitoring - grafana
+  grafana: false
+  # monitoring - node_exporter
+  node_exporter: false
+  # alerting - alert-manager
+  alert_manager: false
+
+## which extra components to deploy (Deprecated)
+extra:
+  # Pulsar proxy
+  proxy: false
+  # Bookkeeper auto-recovery
+  autoRecovery: false
+  # Pulsar dashboard
+  # Deprecated
+  # Replace pulsar-dashboard with pulsar-manager
+  dashboard: false
+  # pulsar manager
+  pulsar_manager: false
+  # Monitoring stack (prometheus and grafana)
+  monitoring: false
+  # Configure Kubernetes runtime for Functions
+  functionsAsPods: false
+
+images:
+  broker:
+    repository: apachepulsar/pulsar-all
+    tag: 2.6.0
+  functions:
+    repository: apachepulsar/pulsar-all
+    tag: 2.6.0
+
+# disable auto recovery
+components:
+  autorecovery: false
+
+zookeeper:
+  replicaCount: 1
+  volumes:
+    # use a persistent volume or emptyDir
+    persistence: true
+    data:
+      name: data
+      size: 2Gi
+      local_storage: true
+
+bookkeeper:
+  replicaCount: 1
+  volumes:
+    # use a persistent volume or emptyDir
+    persistence: true
+    journal:
+      name: journal
+      size: 2Gi
+      local_storage: true
+    ledgers:
+      name: ledgers
+      size: 5Gi
+      local_storage: true
+
+broker:
+  replicaCount: 1
+  configData:
+    ## Enable `autoSkipNonRecoverableData` since bookkeeper is running
+    ## without persistence
+    autoSkipNonRecoverableData: "true"
+    # storage settings
+    managedLedgerDefaultEnsembleSize: "1"
+    managedLedgerDefaultWriteQuorum: "1"
+    managedLedgerDefaultAckQuorum: "1"
+
+proxy:
+  replicaCount: 1

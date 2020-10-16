@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-jobmanager
+  namespace: flink
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: jobmanager
+    spec:
+      containers:
+      - name: jobmanager
+        image: flink:1.11.2-scala_2.11
+        args: ["jobmanager"]
+        ports:
+        - containerPort: 6123
+          name: rpcjobmanager-service
+            port: 6123
+          initialDelaySeconds: 30
+          periodSeconds: 60
+        volumeMounts:
+        - name: flink-config-volume
+          mountPath: /opt/flink/conf
+        - name: job-artefacts-volume
+          mountPath: /opt/flink/usrlib
+        securityContext:
+          runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
+      tolerations:
+      - key: "worker-type"
+        operator: "Equal"
+        value: "flink-job-manager"
+        effect: "NoSchedule"
+      volumes:
+      - name: flink-config-volume
+        configMap:
+          name: flink-config
+          items:
+          - key: flink-conf.yaml
+            path: flink-conf.yaml
+          - key: log4j-console.properties
+            path: log4j-console.properties
+      - name: job-artefacts-volume
+        persistentVolumeClaim:
+          claimName: jobmanager-pv-claim
